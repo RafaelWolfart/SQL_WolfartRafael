@@ -1,4 +1,5 @@
 CREATE DATABASE IF NOT EXISTS club_deportivo;
+USE club_deportivo;
 
 CREATE TABLE IF NOT EXISTS club_deportivo.socios (
     id_socio INT PRIMARY KEY AUTO_INCREMENT,
@@ -6,9 +7,10 @@ CREATE TABLE IF NOT EXISTS club_deportivo.socios (
     apellido VARCHAR(80) NOT NULL,
     dni INT NOT NULL UNIQUE,
     telefono VARCHAR(20) UNIQUE DEFAULT NULL,
-    email VARCHAR(150) UNIQUE DEFAULT NULL,
+    email VARCHAR(150) UNIQUE DEFAULT NULL
 );
 
+ALTER TABLE club_deportivo.socios ADD COLUMN edad INT UNSIGNED DEFAULT NULL;
 ALTER TABLE club_deportivo.socios ADD COLUMN fecha_inscripcion_club DATETIME DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE club_deportivo.socios ADD COLUMN fecha_nacimiento VARCHAR(10) NOT NULL;
 
@@ -27,11 +29,12 @@ CREATE TABLE entrenadores (
     telefono VARCHAR(20)
 );
 
-ALTER TABLE disciplinas
+ALTER TABLE club_deportivo.disciplinas
+ADD id_entrenador INT,
 ADD FOREIGN KEY (id_entrenador) REFERENCES entrenadores(id_entrenador)
     ON DELETE SET NULL;
 
-CREATE TABLE inscripciones (
+CREATE TABLE club_deportivo.inscripciones (
     id_inscripcion INT PRIMARY KEY AUTO_INCREMENT,
     id_socio INT NOT NULL,
     id_disciplina INT NOT NULL,
@@ -41,7 +44,7 @@ CREATE TABLE inscripciones (
     UNIQUE (id_socio, id_disciplina)
 );
 
-CREATE TABLE pagos_mensuales (
+CREATE TABLE club_deportivo.pagos_mensuales (
     id_pago INT PRIMARY KEY AUTO_INCREMENT,
     id_socio INT NOT NULL,
     mes TINYINT NOT NULL CHECK (mes BETWEEN 1 AND 12),
@@ -50,4 +53,3 @@ CREATE TABLE pagos_mensuales (
     fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_socio) REFERENCES socios(id_socio) ON DELETE CASCADE
 );
-
