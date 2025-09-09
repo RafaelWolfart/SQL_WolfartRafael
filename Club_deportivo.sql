@@ -76,15 +76,15 @@ INSERT INTO socios (nombre, apellido, dni, telefono, email, edad, fecha_inscripc
 ('Lucía', 'Martínez', 35444333, '1145678901', 'lucia.martinez@example.com', 22, '2024-06-01', '2002-10-05'),
 ('Federico', 'Sosa', 28999888, '1156789012', 'federico.sosa@example.com', 45, '2021-08-12', '1979-01-30');
 
--- Inscripciones (usando ids generados automáticamente)
+-- Inscripciones 
 INSERT INTO inscripciones (id_socio, id_disciplina, fecha_inscripcion) VALUES
-(1, 1, '2023-02-01'), -- Carlos en Fútbol
-(1, 2, '2023-02-15'), -- Carlos en Natación
-(2, 4, '2022-12-05'), -- María en Básquet
-(3, 1, '2024-03-15'), -- Julián en Fútbol
-(3, 3, '2024-04-10'), -- Julián en Tenis
-(4, 2, '2024-06-10'), -- Lucía en Natación
-(5, 3, '2021-08-20'); -- Federico en Tenis
+(1, 1, '2023-02-01'),
+(1, 2, '2023-02-15'),
+(2, 4, '2022-12-05'),
+(3, 1, '2024-03-15'),
+(3, 3, '2024-04-10'), 
+(4, 2, '2024-06-10'),
+(5, 3, '2021-08-20');
 
 -- Pagos mensuales
 INSERT INTO pagos_mensuales (id_socio, mes, año, monto, fecha_pago) VALUES
@@ -95,4 +95,36 @@ INSERT INTO pagos_mensuales (id_socio, mes, año, monto, fecha_pago) VALUES
 (3, 2, 2025, 8000.00, '2025-02-15'),
 (4, 2, 2025, 7000.00, '2025-02-08'),
 (5, 1, 2025, 8500.00, '2025-01-05');
+
+CREATE VIEW vista_socios_activos AS
+SELECT s.id_socio, s.nombre, s.apellido, d.nombre AS disciplina, i.fecha_inscripcion
+FROM socios s
+JOIN inscripciones i ON s.id_socio = i.id_socio
+JOIN disciplinas d ON i.id_disciplina = d.id_disciplina;
+
+CREATE VIEW vista_pagos_socios AS
+SELECT s.nombre, s.apellido, p.mes, p.año, p.monto, p.fecha_pago
+FROM socios s
+JOIN pagos_mensuales p ON s.id_socio = p.id_socio;
+
+CREATE VIEW vista_disciplinas_entrenadores AS
+SELECT d.nombre AS disciplina, e.nombre AS entrenador, e.apellido
+FROM disciplinas d
+LEFT JOIN entrenadores e ON d.id_entrenador = e.id_entrenador;
+
+CREATE VIEW vista_socios_morosos AS
+SELECT s.id_socio, s.nombre, s.apellido, s.dni
+FROM socios s
+WHERE s.id_socio NOT IN (
+    SELECT p.id_socio
+    FROM pagos_mensuales p
+    WHERE p.año = YEAR(CURDATE()) AND p.mes = MONTH(CURDATE())
+);
+
+CREATE VIEW vista_resumen_disciplinas AS
+SELECT d.id_disciplina, d.nombre AS disciplina, d.cupo_maximo,
+    COUNT(i.id_socio) AS socios_inscriptos
+FROM disciplinas d
+LEFT JOIN inscripciones i ON d.id_disciplina = i.id_disciplina
+GROUP BY d.id_disciplina, d.nombre, d.cupo_maximo;
 
