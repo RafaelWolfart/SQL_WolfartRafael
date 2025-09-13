@@ -128,3 +128,67 @@ FROM disciplinas d
 LEFT JOIN inscripciones i ON d.id_disciplina = i.id_disciplina
 GROUP BY d.id_disciplina, d.nombre, d.cupo_maximo;
 
+
+DELIMITER //
+CREATE FUNCTION calcular_edad(fecha_nac DATE)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    RETURN TIMESTAMPDIFF(YEAR, fecha_nac, CURDATE());
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE FUNCTION monto_total_pagado(idSocio INT)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    DECLARE total DECIMAL(10,2);
+    SELECT SUM(monto) INTO total
+    FROM pagos_mensuales
+    WHERE id_socio = idSocio;
+    RETURN IFNULL(total, 0);
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE PROCEDURE registrar_pago (
+    IN p_id_socio INT,
+    IN p_mes TINYINT,
+    IN p_anio YEAR,
+    IN p_monto DECIMAL(10,2)
+)
+BEGIN
+    INSERT INTO pagos_mensuales (id_socio, mes, año, monto, fecha_pago)
+    VALUES (p_id_socio, p_mes, p_anio, p_monto, NOW());
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE inscribir_socio (
+    IN p_id_socio INT,
+    IN p_id_disciplina INT
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM inscripciones
+        WHERE id_socio = p_id_socio AND id_disciplina = p_id_disciplina
+    ) THEN
+        INSERT INTO inscripciones (id_socio, id_disciplina, fecha_inscripcion)
+        VALUES (p_id_socio, p_id_disciplina, NOW());
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE reporte_pagos_por_mes (
+    IN p_mes TINYINT,
+    IN p_anio YEAR
+)
+BEGIN
+    SELECT p_mes AS mes, p_anio AS año, SUM(monto) AS total_recaudado
+    FROM pagos_mensuales
+    WHERE mes = p_mes AND año = p_anio;
+END //
+DELIMITER ;
