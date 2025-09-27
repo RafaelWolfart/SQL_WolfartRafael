@@ -192,3 +192,53 @@ BEGIN
     WHERE mes = p_mes AND año = p_anio;
 END //
 DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER validar_cupo_inscripcion
+BEFORE INSERT ON inscripciones
+FOR EACH ROW
+BEGIN
+    DECLARE cantidad INT;
+    DECLARE max_cupo INT;
+    
+    SELECT COUNT(*) INTO cantidad
+    FROM inscripciones
+    WHERE id_disciplina = NEW.id_disciplina;
+    
+    SELECT cupo_maximo INTO max_cupo
+    FROM disciplinas
+    WHERE id_disciplina = NEW.id_disciplina;
+    
+    IF cantidad >= max_cupo THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'No hay cupo disponible en esta disciplina';
+    END IF;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER actualizar_edad
+BEFORE INSERT ON socios
+FOR EACH ROW
+BEGIN
+    SET NEW.edad = TIMESTAMPDIFF(YEAR, STR_TO_DATE(NEW.fecha_nacimiento, '%d/%m/%Y'), CURDATE());
+END //
+DELIMITER ;
+
+
+-- Caso de prueba función calcular_edad
+SELECT calcular_edad('2000-05-15');
+
+-- Caso de prueba función monto_total_pagado
+SELECT s.nombre, s.apellido, monto_total_pagado(s.id_socio) AS total_pagado
+FROM socios s
+WHERE s.id_socio = 1;
+
+-- Caso de prueba procedimiento registrar_pago
+CALL registrar_pago(2, 9, 2025, 5000.00);
+
+-- Caso de prueba procedimiento inscribir_socio
+CALL inscribir_socio(1, 3);
+
+-- Caso de prueba reporte_pagos_por_mes
+CALL reporte_pagos_por_mes(2, 2025);
